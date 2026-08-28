@@ -71,6 +71,10 @@ A signed MSIX or Squirrel package could automate it properly later.
 
 ## Running it on your own machine
 
+> Setting it up on a second computer? Follow [LAPTOP-SETUP.md](LAPTOP-SETUP.md),
+> which is a standalone checklist including the Smart App Control check, the
+> per-machine API key, and VPN notes.
+
 Requires the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 ```powershell
