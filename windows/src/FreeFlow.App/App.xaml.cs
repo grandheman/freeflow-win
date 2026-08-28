@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Windows;
+using System.Windows.Threading;
 using FreeFlow.App.UI;
 
 namespace FreeFlow.App;
@@ -51,9 +52,17 @@ public partial class App : Application
 
         _overlay = new RecordingOverlay();
         _tray = new TrayIcon(_state);
-        _tray.OpenSettingsRequested += ShowSettings;
-        _tray.OpenDebugPanelRequested += ShowDebugPanel;
-        _tray.QuitRequested += Shutdown;
+        // Opened asynchronously, not inline. These fire from a Windows Forms
+        // ContextMenuStrip click handler, and that menu still holds mouse capture
+        // while the handler runs. A WPF window shown synchronously inside it comes
+        // up unable to receive any mouse input at all. Deferring to the dispatcher
+        // lets the menu finish closing and release capture first.
+        _tray.OpenSettingsRequested += () => Dispatcher.BeginInvoke(
+            new Action(ShowSettings), DispatcherPriority.Background);
+        _tray.OpenDebugPanelRequested += () => Dispatcher.BeginInvoke(
+            new Action(ShowDebugPanel), DispatcherPriority.Background);
+        _tray.QuitRequested += () => Dispatcher.BeginInvoke(
+            new Action(() => Shutdown()), DispatcherPriority.Background);
 
         try
         {

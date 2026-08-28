@@ -42,20 +42,30 @@ public sealed class TrayIcon : IDisposable
     {
         _state = state;
 
+        var menu = new ContextMenuStrip();
+
+        // Close the menu before raising, so it has surrendered mouse capture by the
+        // time a window opens. The handlers also defer the actual open onto the WPF
+        // dispatcher; both are needed for a window that reliably accepts input.
+        void Raise(Action? handler)
+        {
+            menu.Close(ToolStripDropDownCloseReason.ItemClicked);
+            handler?.Invoke();
+        }
+
         _statusItem = new ToolStripMenuItem("Ready") { Enabled = false };
         _shortcutItem = new ToolStripMenuItem(ShortcutSummary()) { Enabled = false };
         _pasteAgainItem = new ToolStripMenuItem("Paste last transcript again", null,
-            (_, _) => _ = _state.PasteAgainAsync());
+            (_, _) => Raise(() => _ = _state.PasteAgainAsync()));
 
-        var menu = new ContextMenuStrip();
         menu.Items.Add(_statusItem);
         menu.Items.Add(_shortcutItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_pasteAgainItem);
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(new ToolStripMenuItem("Settings", null, (_, _) => OpenSettingsRequested?.Invoke()));
-        menu.Items.Add(new ToolStripMenuItem("Pipeline history", null, (_, _) => OpenDebugPanelRequested?.Invoke()));
-        menu.Items.Add(new ToolStripMenuItem("Quit FreeFlow", null, (_, _) => QuitRequested?.Invoke()));
+        menu.Items.Add(new ToolStripMenuItem("Settings", null, (_, _) => Raise(() => OpenSettingsRequested?.Invoke())));
+        menu.Items.Add(new ToolStripMenuItem("Pipeline history", null, (_, _) => Raise(() => OpenDebugPanelRequested?.Invoke())));
+        menu.Items.Add(new ToolStripMenuItem("Quit FreeFlow", null, (_, _) => Raise(() => QuitRequested?.Invoke())));
 
         _idleIcon = BuildIcon(Color.FromArgb(0xB8, 0xBA, 0xC4));
         _liveIcon = BuildIcon(Color.FromArgb(0xFF, 0x6B, 0x4A));
