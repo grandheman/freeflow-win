@@ -53,7 +53,7 @@ public partial class RecordingOverlay : Window
     /// <summary>Shows the capsule for a new session.</summary>
     public void ShowForSession(RecordingTriggerMode mode)
     {
-        Meter.Reset();
+        Meter.Start();
         SetMode(mode);
         StatusLabel.Text = "Listening";
         LiveDot.Visibility = Visibility.Visible;
@@ -84,10 +84,15 @@ public partial class RecordingOverlay : Window
         StatusLabel.Text = message;
         LiveDot.Visibility = Visibility.Collapsed;
         Meter.Level = 0;
+        // The microphone is closed, so freeze the trace rather than let it drain
+        // to a flat line, which would read as a capture failure.
+        Meter.Stop();
     }
 
     public void HideOverlay()
     {
+        Meter.Stop();
+
         if (!IsVisible) return;
 
         var fade = new DoubleAnimation(Opacity, 0, TimeSpan.FromMilliseconds(180));

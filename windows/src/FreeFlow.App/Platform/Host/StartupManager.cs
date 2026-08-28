@@ -1,5 +1,6 @@
 using System;
-using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using Microsoft.Win32;
 
 namespace FreeFlow.App.Platform.Host;
@@ -52,11 +53,10 @@ public static class StartupManager
 
             if (enabled)
             {
-                var executablePath = ExecutablePath();
-                if (executablePath is null) return false;
+                var command = StartupCommand();
+                if (command is null) return false;
 
-                // Quoted so a path containing spaces is parsed as one argument.
-                key.SetValue(ValueName, $"\"{executablePath}\"");
+                key.SetValue(ValueName, command);
             }
             else
             {
@@ -71,18 +71,53 @@ public static class StartupManager
         }
     }
 
-    private static string? ExecutablePath()
+    /// <summary>
+    /// Builds the command line that relaunches this app exactly the way it is
+    /// currently running.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// There are two launch shapes, and registering the wrong one silently breaks
+    /// launch-at-login:
+    /// </para>
+    /// <list type="bullet">
+    /// <item>
+    /// Normal: the process is FreeFlow.exe, so the path alone is enough.
+    /// </item>
+    /// <item>
+    /// Under the shared runtime: the process is dotnet.exe and the app is an
+    /// argument. Registering just the host path would launch dotnet with no
+    /// assembly, which prints usage text and exits. This matters because running
+    /// through the Microsoft-signed host is how the app starts on machines with
+    /// Smart App Control enabled and no code-signing certificate.
+    /// </item>
+    /// </list>
+    /// </remarks>
+    private static string? StartupCommand()
     {
         try
         {
-            // MainModule gives the real .exe path, which Assembly.Location does not
-            // for a single-file published build.
-            using var process = Process.GetCurrentProcess();
-            return process.MainModule?.FileName;
+            var hostPath = Environment.ProcessPath;
+            if (string.IsNullOrEmpty(hostPath)) return null;
+
+            var hostName = Path.GetFileNameWithoutExtension(hostPath);
+            if (!hostName.Equals("dotnet", StringComparison.OrdinalIgnoreCase))
+            {
+                // Launched through the app host. Quoted so a path with spaces
+                // parses as a single argument.
+                return $"\"{hostPath}\"";
+            }
+
+            // Launched through the shared runtime, so the managed assembly has to
+            // be passed along explicitly.
+            var assemblyPath = Assembly.GetEntryAssembly()?.Location;
+            if (string.IsNullOrEmpty(assemblyPath)) return null;
+
+            return $"\"{hostPath}\" \"{assemblyPath}\"";
         }
         catch (Exception)
         {
-            return Environment.ProcessPath;
+            return null;
         }
     }
 }

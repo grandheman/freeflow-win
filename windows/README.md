@@ -69,9 +69,76 @@ location, which requires elevation, and an unsigned self-updater that does so is
 exactly the shape of an attack. Handing off to the browser keeps that decision visible.
 A signed MSIX or Squirrel package could automate it properly later.
 
-## Building
+## Running it on your own machine
 
 Requires the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+
+```powershell
+cd windows
+dotnet build FreeFlow.sln --configuration Release
+.\install-shortcuts.ps1
+```
+
+Then search the Start Menu for FreeFlow. It lives in the notification area; look for
+the microphone icon. Add `-AtLogin` to the install script to start it at sign-in, and
+`-Remove` to take the shortcuts away again.
+
+The shortcut launches `run-freeflow.vbs`, which starts the app through the .NET host
+rather than running `FreeFlow.exe` directly. That is deliberate, and the next section
+explains why.
+
+### Smart App Control and unsigned builds
+
+If Smart App Control is enabled, Windows blocks unsigned executables from loading.
+Your own local build is unsigned, so `FreeFlow.exe` will not start: it fails with
+`0x800711C7`, or crashes with exit code `-532462766` and a bare `KERNELBASE.dll` fault
+and no managed stack trace. `dotnet test` fails the same way.
+
+Check whether it applies to you:
+
+```powershell
+(Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy").VerifiedAndReputablePolicyState
+# 0 = off, 1 = enforced, 2 = evaluation
+```
+
+The block is confirmable in the `Microsoft-Windows-CodeIntegrity/Operational` event log,
+event ID 3077, which names the exact assembly that was refused.
+
+**The fix is to run the app through `dotnet.exe`**, which is signed by Microsoft, so the
+managed assembly is allowed to load into it. That is all `run-freeflow.vbs` does, and it
+costs nothing:
+
+```powershell
+& "$env:ProgramFiles\dotnet\dotnet.exe" "src\FreeFlow.App\bin\Release\net8.0-windows10.0.19041.0\FreeFlow.dll"
+```
+
+This is why the build here is framework-dependent rather than a self-contained
+single-file executable. A single-file publish produces exactly the unsigned executable
+that gets blocked.
+
+Note that Smart App Control state is per-machine, so a build that runs on one of your
+computers may be refused on another.
+
+Two things this is **not**:
+
+- Not a way to distribute the app. Anyone else with Smart App Control on hits the same
+  wall, and telling users to run a script is not a shipping story.
+- Not a reason to disable Smart App Control. Turning it off is one-way; re-enabling it
+  requires reinstalling Windows.
+
+### Distributing it
+
+Distribution needs an Authenticode signature from a CA in the Microsoft Trusted Root
+Program. Since 2023, code-signing private keys must live on certified hardware, so a
+downloadable `.pfx` is no longer an option; expect either a cloud HSM or a USB token.
+[SignPath Foundation](https://signpath.org/) issues certificates free to open source
+projects and integrates with CI.
+
+Be aware that signing alone may not be enough at first. Smart App Control checks the
+signature and the app's reputation as separate gates, so a newly signed, low-distribution
+app can still be blocked until the Intelligent Security Graph has history for it.
+
+## Building and testing
 
 ```powershell
 cd windows
@@ -79,39 +146,12 @@ dotnet build FreeFlow.sln --configuration Release
 dotnet test tests/FreeFlow.Core.Tests/FreeFlow.Core.Tests.csproj
 ```
 
-To produce a single self-contained executable:
-
-```powershell
-dotnet publish src/FreeFlow.App/FreeFlow.App.csproj `
-  --configuration Release --runtime win-x64 --self-contained true `
-  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
-  --output publish
-```
-
 Warnings are treated as errors, so the build also enforces that the port stays
 warning-clean.
 
-### Smart App Control blocks unsigned local builds
-
-If Smart App Control is enforced on your machine, freshly built unsigned assemblies are
-blocked from loading, and both the app and `dotnet test` will fail with
-`0x800711C7` / exit code `-532462766`. Check with:
-
-```powershell
-(Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy").VerifiedAndReputablePolicyState
-# 0 = off, 1 = enforced, 2 = evaluation
-```
-
-Three ways around it, in order of preference:
-
-1. **Use CI.** `.github/workflows/windows-check.yml` builds and tests on a
-   `windows-latest` runner, which has no Smart App Control.
-2. **Sign your builds** with an Authenticode certificate.
-3. **Turn Smart App Control off.** Be aware this is one-way: once disabled it cannot be
-   re-enabled without reinstalling Windows.
-
-The same constraint applies to shipping. Users with Smart App Control on cannot run an
-unsigned FreeFlow at all, so a release build needs Authenticode signing.
+If Smart App Control blocks the test run locally, CI is the way to get a real result:
+`.github/workflows/windows-check.yml` builds and tests on a `windows-latest` runner,
+which has no Smart App Control.
 
 ## Project layout
 

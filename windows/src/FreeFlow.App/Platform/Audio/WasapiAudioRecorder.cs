@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Threading;
-using FreeFlow.Core.Audio;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 
@@ -49,9 +48,16 @@ public sealed class WasapiAudioRecorder : IDisposable
     private string? _activeFilePath;
     private bool _receivedAudio;
     private bool _failureReported;
-    private LiveAudioLevelNormalizer _levelNormalizer = new();
 
-    /// <summary>Smoothed 0-1 microphone level for the overlay meter.</summary>
+    /// <summary>
+    /// Raw RMS of the latest capture buffer, 0 to 1.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately unsmoothed. Shared-mode WASAPI delivers only about 16 buffers a
+    /// second, and the level normalizer's attack and release constants are per-sample,
+    /// so running it here would make the meter take seconds to adapt. The UI runs it
+    /// at frame rate instead.
+    /// </remarks>
     public event Action<float>? LevelChanged;
 
     /// <summary>
@@ -92,7 +98,6 @@ public sealed class WasapiAudioRecorder : IDisposable
                 _activeFilePath = filePath;
                 _receivedAudio = false;
                 _failureReported = false;
-                _levelNormalizer.Reset();
 
                 Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
 
@@ -108,6 +113,13 @@ public sealed class WasapiAudioRecorder : IDisposable
                 {
                     DiscardOnBufferOverflow = true,
                     BufferDuration = TimeSpan.FromSeconds(10),
+
+                    // Critical. The default is true, which pads every read with
+                    // silence to fill the requested count. The resampler would then
+                    // never report end-of-data, so the drain loop below would spin
+                    // forever manufacturing silence, wedging the capture thread on
+                    // its first callback and writing gigabytes of nothing.
+                    ReadFully = false,
                 };
 
                 var uploadFormat = new WaveFormat(RecordingSampleRate, 16, 1);
@@ -208,7 +220,13 @@ public sealed class WasapiAudioRecorder : IDisposable
         PublishLevel(args);
     }
 
-    /// <summary>Pulls everything currently available through the resampler into the file.</summary>
+    /// <summary>
+    /// Pulls everything currently available through the resampler into the file.
+    /// </summary>
+    /// <remarks>
+    /// Terminating this loop depends on the source buffer having
+    /// <c>ReadFully = false</c>, so that a drained buffer yields a read of zero.
+    /// </remarks>
     private void DrainLocked()
     {
         if (_uploadResampler is null || _writer is null) return;
@@ -218,13 +236,7 @@ public sealed class WasapiAudioRecorder : IDisposable
         while ((read = _uploadResampler.Read(buffer, 0, buffer.Length)) > 0)
         {
             _writer.Write(buffer, 0, read);
-
-            if (RealtimeSamplesAvailable is not null)
-            {
-                RealtimeSamplesAvailable(ResampleForRealtime(buffer, read));
-            }
-
-            if (read < buffer.Length) break;
+            RealtimeSamplesAvailable?.Invoke(ResampleForRealtime(buffer, read));
         }
     }
 
@@ -271,8 +283,7 @@ public sealed class WasapiAudioRecorder : IDisposable
         lock (_gate) format = _capture?.WaveFormat;
         if (format is null) return;
 
-        var rms = ComputeRms(args.Buffer, args.BytesRecorded, format);
-        handler(_levelNormalizer.NormalizedLevel(rms));
+        handler(ComputeRms(args.Buffer, args.BytesRecorded, format));
     }
 
     /// <summary>

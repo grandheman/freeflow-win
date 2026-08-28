@@ -86,7 +86,14 @@ public sealed class AppState : INotifyPropertyChanged, IDisposable
         _settings = (_store.GetObject<AppSettings>(SettingsKey) ?? new AppSettings()).Migrated();
 
         _recorder.LevelChanged += level => AudioLevel = level;
-        _recorder.Failed += error => Fail(error.Message);
+        _recorder.Failed += error =>
+        {
+            DiagnosticLog.WriteError("recorder.failed", error);
+            Fail(error.Message);
+        };
+
+        DiagnosticLog.Start();
+        DiagnosticLog.Write("app.start", $"hasKey={HasApiKey} contextAware={_settings.ContextAwarenessEnabled} cleanup={_settings.PostProcessingEnabled}");
     }
 
     // MARK: Observable state
@@ -195,6 +202,8 @@ public sealed class AppState : INotifyPropertyChanged, IDisposable
             }
 
             var action = _sessionController.Handle(shortcutEvent, Status == PipelineStatus.Transcribing);
+            DiagnosticLog.Write("shortcut",
+                $"{shortcutEvent} -> {action?.GetType().Name ?? "none"} (mode={_sessionController.ActiveMode?.ToString() ?? "idle"}, status={Status})");
             DispatchAction(action);
         }
 
@@ -235,7 +244,9 @@ public sealed class AppState : INotifyPropertyChanged, IDisposable
     {
         try
         {
-            CancelPipeline();
+            // Clear any leftover work without ending the shortcut session that the
+            // hook thread just started for this recording.
+            DiscardPipelineWork();
             _pipelineCancellation = new CancellationTokenSource();
 
             // Capture the selection before recording starts. Once the overlay appears
@@ -248,6 +259,7 @@ public sealed class AppState : INotifyPropertyChanged, IDisposable
 
             _recorder.Start(path, NullIfEmpty(Settings.InputDeviceId));
             _activeRecordingPath = path;
+            DiagnosticLog.Write("record.start", $"mode={mode}");
 
             Status = PipelineStatus.Recording;
             StatusMessage = mode == RecordingTriggerMode.Hold ? "Listening" : "Listening (tap to stop)";
@@ -261,6 +273,7 @@ public sealed class AppState : INotifyPropertyChanged, IDisposable
         }
         catch (Exception error)
         {
+            DiagnosticLog.WriteError("record.start.failed", error);
             Fail(error.Message);
             _sessionController.Reset();
         }
@@ -294,12 +307,23 @@ public sealed class AppState : INotifyPropertyChanged, IDisposable
     private async Task FinishRecordingAsync()
     {
         var cancellation = _pipelineCancellation;
-        if (cancellation is null) return;
+        if (cancellation is null)
+        {
+            DiagnosticLog.Write("finish.skipped", $"no active pipeline, status={Status}");
+            // No pipeline to finish, but the UI may still be showing a recording
+            // state. Returning silently here would leave the overlay stuck with no
+            // way for the user to dismiss it.
+            if (Status != PipelineStatus.Idle) Reset("Ready");
+            _sessionController.Reset();
+            return;
+        }
 
         try
         {
             var recordingPath = _recorder.Stop();
             _activeRecordingPath = null;
+            DiagnosticLog.Write("record.stop",
+                recordingPath is null ? "no audio" : $"bytes={new FileInfo(recordingPath).Length}");
 
             if (Settings.PlaySounds) FeedbackSounds.PlayStop();
 
@@ -315,8 +339,10 @@ public sealed class AppState : INotifyPropertyChanged, IDisposable
             var token = cancellation.Token;
 
             var transcriptionService = new TranscriptionService(Settings.ToTranscriptionOptions(ApiKey));
+            DiagnosticLog.Write("transcribe.begin");
             var rawTranscript = await transcriptionService.TranscribeAsync(recordingPath, token)
                 .ConfigureAwait(false);
+            DiagnosticLog.Write("transcribe.done", $"chars={rawTranscript.Trim().Length}");
 
             TryDeleteRecording(recordingPath);
 
@@ -330,7 +356,10 @@ public sealed class AppState : INotifyPropertyChanged, IDisposable
                 ? DictationContext.Empty
                 : await _contextTask.ConfigureAwait(false);
 
+            DiagnosticLog.Write("context.ready", $"chars={context.ContextSummary.Length}");
+
             var result = await RunTextStageAsync(rawTranscript, context, token).ConfigureAwait(false);
+            DiagnosticLog.Write("cleanup.done", $"chars={result.Transcript.Trim().Length}");
 
             if (result.Transcript.Trim().Length == 0)
             {
@@ -338,17 +367,21 @@ public sealed class AppState : INotifyPropertyChanged, IDisposable
                 return;
             }
 
+            DiagnosticLog.Write("paste.begin", $"chars={result.Transcript.Length}");
             await PasteAsync(result.Transcript, token).ConfigureAwait(false);
+            DiagnosticLog.Write("paste.done");
 
             RecordHistory(rawTranscript, result, context);
             Reset("Ready");
         }
         catch (OperationCanceledException)
         {
+            DiagnosticLog.Write("pipeline.cancelled");
             Reset("Cancelled");
         }
         catch (Exception error)
         {
+            DiagnosticLog.WriteError("pipeline.failed", error);
             Fail(error.Message);
         }
         finally
@@ -485,7 +518,18 @@ public sealed class AppState : INotifyPropertyChanged, IDisposable
 
     // MARK: Helpers
 
-    public void CancelPipeline()
+    /// <summary>
+    /// Abandons any in-flight pipeline work and discards its recording.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately does not touch <see cref="_sessionController"/>. Starting a new
+    /// recording calls this to clear leftovers, and the session it is starting was
+    /// already registered by the shortcut layer moments earlier on the hook thread.
+    /// Resetting the controller here would discard that session, so the later
+    /// key-release would find no active mode, emit no stop action, and strand the
+    /// recording with the overlay stuck on screen.
+    /// </remarks>
+    private void DiscardPipelineWork()
     {
         _pipelineCancellation?.Cancel();
         _pipelineCancellation?.Dispose();
@@ -499,6 +543,18 @@ public sealed class AppState : INotifyPropertyChanged, IDisposable
         }
 
         _activeRecordingPath = null;
+    }
+
+    /// <summary>
+    /// Cancels the current dictation outright, as Escape does.
+    /// </summary>
+    /// <remarks>
+    /// Unlike <see cref="DiscardPipelineWork"/> this also ends the shortcut session,
+    /// because the user is abandoning the dictation rather than starting another.
+    /// </remarks>
+    public void CancelPipeline()
+    {
+        DiscardPipelineWork();
         _sessionController.Reset();
 
         if (Status != PipelineStatus.Idle) Reset("Ready");

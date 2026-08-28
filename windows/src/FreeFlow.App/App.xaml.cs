@@ -39,8 +39,15 @@ public partial class App : Application
         ThemeManager.ApplySystemTheme(this);
 
         _state = new AppState();
-        _state.ErrorRaised += message => Dispatcher.Invoke(() => _tray?.ShowError(message));
-        _state.PropertyChanged += (_, args) => Dispatcher.Invoke(() => OnStateChanged(args.PropertyName));
+
+        // BeginInvoke, not Invoke. These fire from the audio capture thread and the
+        // keyboard hook thread. A blocking Invoke from either would stall that thread
+        // whenever the UI is busy, and stalling the hook thread freezes keyboard input
+        // for every application on the machine.
+        _state.ErrorRaised += message =>
+            Dispatcher.BeginInvoke(() => _tray?.ShowError(message));
+        _state.PropertyChanged += (_, args) =>
+            Dispatcher.BeginInvoke(() => OnStateChanged(args.PropertyName));
 
         _overlay = new RecordingOverlay();
         _tray = new TrayIcon(_state);
