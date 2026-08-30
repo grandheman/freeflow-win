@@ -23,10 +23,17 @@
     .\fix-stuck.ps1 -WhatIf
 #>
 
-[CmdletBinding(SupportsShouldProcess)]
-param()
+[CmdletBinding()]
+param(
+    [switch]$WhatIf
+)
 
 $ErrorActionPreference = 'Stop'
+
+# Captured as a plain switch rather than via SupportsShouldProcess, because
+# $WhatIfPreference propagates into every cmdlet the script calls and makes
+# module imports announce themselves. Only the settings write is conditional.
+$applyChanges = -not $WhatIf
 
 $dataDir = Join-Path $env:APPDATA 'FreeFlow'
 $settingsPath = Join-Path $dataDir 'settings.json'
@@ -57,7 +64,59 @@ if (Test-Path $logPath) {
     Write-Host "  no diagnostic log yet"
 }
 
-# 3. Persisted rate-limit cooldowns, the usual cause.
+# 3. Can this machine even reach the provider?
+Write-Host "`n=== provider reachability ===" -ForegroundColor Cyan
+
+$vpnUp = @(Get-NetAdapter -ErrorAction SilentlyContinue |
+    Where-Object { $_.Status -eq 'Up' -and
+        ($_.InterfaceDescription -like '*WireGuard*' -or
+         $_.InterfaceDescription -like '*TAP*' -or
+         $_.Name -like '*VPN*' -or $_.Name -like '*Surfshark*' -or
+         $_.Name -like '*NordLynx*' -or $_.Name -like '*Proton*') })
+
+if ($vpnUp) {
+    $vpnUp | ForEach-Object { Write-Host "  VPN adapter up: $($_.Name)" -ForegroundColor Yellow }
+}
+
+try {
+    Add-Type -AssemblyName System.Net.Http
+    $client = New-Object System.Net.Http.HttpClient
+    $client.Timeout = [TimeSpan]::FromSeconds(15)
+    $response = $client.GetAsync('https://api.groq.com/openai/v1/models').Result
+    $code = [int]$response.StatusCode
+    $body = $response.Content.ReadAsStringAsync().Result
+
+    if ($code -eq 401) {
+        Write-Host "  HTTP 401 - reachable. The network is fine." -ForegroundColor Green
+    }
+    elseif ($code -eq 403 -and $body -match 'network settings') {
+        Write-Host "  HTTP 403 - the provider is blocking this network" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "  Groq blocks VPN exit IPs. This is not your API key: the same 403" -ForegroundColor Red
+        Write-Host "  comes back with no key at all." -ForegroundColor Red
+        Write-Host ""
+        Write-Host "  Fix it one of these ways:"
+        Write-Host "    - Surfshark Bypasser, adding C:\Program Files\dotnet\dotnet.exe"
+        Write-Host "      (NOT FreeFlow.exe -- the app runs through the .NET host, so a"
+        Write-Host "      rule naming FreeFlow.exe matches nothing)"
+        Write-Host "    - or disconnect the VPN while dictating"
+        Write-Host ""
+        Write-Host "  Restart FreeFlow after any VPN change. It holds pooled connections"
+        Write-Host "  and keeps failing on stale ones until it is restarted." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "  Note this tested PowerShell's route, not FreeFlow's. With an"
+        Write-Host "  app-based bypass this can read 403 while FreeFlow itself works."
+    }
+    else {
+        Write-Host "  HTTP $code"
+        if ($body) { Write-Host "  $($body.Substring(0, [Math]::Min(200, $body.Length)))" }
+    }
+}
+catch {
+    Write-Host "  could not reach the provider: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# 4. Persisted rate-limit cooldowns.
 Write-Host "`n=== persisted rate-limit cooldowns ===" -ForegroundColor Cyan
 
 if (-not (Test-Path $settingsPath)) {
@@ -100,7 +159,8 @@ if (-not $blocking) {
     return
 }
 
-if (-not $PSCmdlet.ShouldProcess($settingsPath, 'Remove persisted rate-limit cooldowns')) {
+if (-not $applyChanges) {
+    Write-Host "`n  -WhatIf given, so nothing was changed." -ForegroundColor Yellow
     return
 }
 
