@@ -152,8 +152,8 @@ until it is restarted.
 **Records but never pastes, and restarting does not help?** Run:
 
 ```powershell
-cd C:\developreeflow-win\windows
-.ix-stuck.ps1
+cd C:\develop\freeflow-win\windows
+.\fix-stuck.ps1
 ```
 
 That state surviving a restart means something was persisted, and the usual
