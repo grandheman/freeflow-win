@@ -149,6 +149,21 @@ until it is restarted.
 
 ## Troubleshooting
 
+**Records but never pastes, and restarting does not help?** Run:
+
+```powershell
+cd C:\developreeflow-win\windows
+.ix-stuck.ps1
+```
+
+That state surviving a restart means something was persisted, and the usual
+cause is a rate-limit cooldown written to `settings.json`. FreeFlow keeps a
+daily-looking cooldown across restarts on purpose, and while it is active the
+cleanup stage will not even attempt a request. Recording still works, because
+transcription is a different endpoint that does not consult it. A burst of
+rapid dictations, for instance from fumbling the shortcut key several times, is
+enough to trigger it. The script reports what it finds and clears it.
+
 **Check the diagnostic log first.** It records what each stage of the pipeline
 did, and the missing line names the broken stage:
 
