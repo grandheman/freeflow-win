@@ -1,9 +1,16 @@
+# DISABLED IN THIS FORK.
+#
+# This is the upstream macOS release workflow. It needs Apple Developer ID
+# signing and notarisation secrets that this fork does not have, so it fails on
+# every run. The file is kept rather than deleted so it can still be diffed
+# against upstream, but its automatic triggers are removed.
+#
+# The Windows equivalent is windows-release.yml.
+
 name: Dev Release
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
