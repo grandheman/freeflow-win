@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="FreeFlow">
+  <!--
+    A keycap with a voice on its face.
+
+    The keycap is the app's own vocabulary: every shortcut in FreeFlow is drawn
+    as a physical key, because the whole product is one key you hold. The
+    two-tone bottom edge is the same trick the app's UI uses to give a keycap
+    depth without a shadow, which survives being scaled down to a favicon.
+
+    The coral is the app's signal colour, used there only while the microphone
+    is live. Same meaning here.
+  -->
+  <defs>
+    <clipPath id="cap">
+      <rect x="6" y="5" width="52" height="52" rx="13"/>
+    </clipPath>
+  </defs>
+
+  <!-- Bottom edge, read as the side of the key. -->
+  <rect x="6" y="9" width="52" height="52" rx="13" fill="#2C2E36"/>
+
+  <!-- Key face. -->
+  <rect x="6" y="5" width="52" height="52" rx="13" fill="#202128"/>
+  <rect x="6" y="5" width="52" height="52" rx="13" fill="none" stroke="#3A3D47" stroke-width="1.5"/>
+
+  <!-- Voice. Heights follow a plausible speech envelope rather than a smooth
+       curve, so it reads as measured audio and not as ornament. -->
+  <g clip-path="url(#cap)" fill="#FF6B4A">
+    <rect x="17" y="27.5" width="3.4" height="7"  rx="1.7"/>
+    <rect x="23" y="22.5" width="3.4" height="17" rx="1.7"/>
+    <rect x="29" y="17"   width="3.4" height="28" rx="1.7"/>
+    <rect x="35" y="24"   width="3.4" height="14" rx="1.7"/>
+    <rect x="41" y="28.5" width="3.4" height="5"  rx="1.7"/>
+  </g>
+</svg>

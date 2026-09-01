@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 344" width="880" height="344"
+     role="img" aria-label="FreeFlow for Windows. Hold a key, talk, and your words appear where you were typing.">
+  <rect width="880" height="344" rx="16" fill="#FBFBFD"/>
+
+  <g transform="translate(403.0,34)">
+    <rect x="6.94" y="10.41" width="60.12" height="60.12" rx="15.03" fill="#D8DAE2"/>
+    <rect x="6.94" y="5.78" width="60.12" height="60.12" rx="15.03" fill="#FFFFFF"/>
+    <rect x="6.94" y="5.78" width="60.12" height="60.12" rx="15.03" fill="none" stroke="#DCDEE6" stroke-width="1.73"/>
+    <g fill="#E24A22"><rect x="19.66" y="31.8" width="3.93" height="8.09" rx="1.97"/><rect x="26.59" y="26.02" width="3.93" height="19.66" rx="1.97"/><rect x="33.53" y="19.66" width="3.93" height="32.38" rx="1.97"/><rect x="40.47" y="27.75" width="3.93" height="16.19" rx="1.97"/><rect x="47.41" y="32.95" width="3.93" height="5.78" rx="1.97"/></g>
+  </g>
+
+  <text x="440.0" y="164" font-family="Segoe UI Variable Display,Segoe UI,system-ui,-apple-system,sans-serif" font-size="44" font-weight="600" fill="#17181C" text-anchor="middle">FreeFlow</text>
+  <text x="440.0" y="189" font-family="Cascadia Mono,Consolas,ui-monospace,monospace" font-size="13" fill="#E24A22" letter-spacing="3" text-anchor="middle">FOR WINDOWS</text>
+
+  <text x="440.0" y="232" font-family="Segoe UI Variable Display,Segoe UI,system-ui,-apple-system,sans-serif" font-size="19" fill="#5F616B" text-anchor="middle">Hold a key. Talk. Your words appear where you were typing.</text>
+
+  <g>
+    <rect x="251.3" y="247.0" width="377.4" height="54" rx="27.0"
+          fill="#FFFFFF" stroke="#E1E2E8" stroke-width="1"/>
+    <circle cx="277.8" cy="274" r="4.5" fill="#E24A22"/>
+    <rect x="295.3" y="272.7" width="3.0" height="2.6" rx="1.5" fill="#E24A22" opacity="0.3"/><rect x="300.9" y="272.7" width="3.0" height="2.6" rx="1.5" fill="#E24A22" opacity="0.321"/><rect x="306.5" y="272.18" width="3.0" height="3.64" rx="1.5" fill="#E24A22" opacity="0.341"/><rect x="312.1" y="272.57" width="3.0" height="2.86" rx="1.5" fill="#E24A22" opacity="0.362"/><rect x="317.7" y="271.14" width="3.0" height="5.72" rx="1.5" fill="#E24A22" opacity="0.382"/><rect x="323.3" y="269.06" width="3.0" height="9.88" rx="1.5" fill="#E24A22" opacity="0.403"/><rect x="328.9" y="267.24" width="3.0" height="13.52" rx="1.5" fill="#E24A22" opacity="0.424"/><rect x="334.5" y="266.07" width="3.0" height="15.86" rx="1.5" fill="#E24A22" opacity="0.444"/><rect x="340.1" y="266.85" width="3.0" height="14.3" rx="1.5" fill="#E24A22" opacity="0.465"/><rect x="345.7" y="268.41" width="3.0" height="11.18" rx="1.5" fill="#E24A22" opacity="0.485"/><rect x="351.3" y="270.1" width="3.0" height="7.8" rx="1.5" fill="#E24A22" opacity="0.506"/><rect x="356.9" y="271.53" width="3.0" height="4.94" rx="1.5" fill="#E24A22" opacity="0.526"/><rect x="362.5" y="272.44" width="3.0" height="3.12" rx="1.5" fill="#E24A22" opacity="0.547"/><rect x="368.1" y="271.92" width="3.0" height="4.16" rx="1.5" fill="#E24A22" opacity="0.568"/><rect x="373.7" y="270.36" width="3.0" height="7.28" rx="1.5" fill="#E24A22" opacity="0.588"/><rect x="379.3" y="267.89" width="3.0" height="12.22" rx="1.5" fill="#E24A22" opacity="0.609"/><rect x="384.9" y="265.16" width="3.0" height="17.68" rx="1.5" fill="#E24A22" opacity="0.629"/><rect x="390.5" y="263.21" width="3.0" height="21.58" rx="1.5" fill="#E24A22" opacity="0.65"/><rect x="396.1" y="262.17" width="3.0" height="23.66" rx="1.5" fill="#E24A22" opacity="0.671"/><rect x="401.7" y="262.82" width="3.0" height="22.36" rx="1.5" fill="#E24A22" opacity="0.691"/><rect x="407.3" y="264.64" width="3.0" height="18.72" rx="1.5" fill="#E24A22" opacity="0.712"/><rect x="412.9" y="266.46" width="3.0" height="15.08" rx="1.5" fill="#E24A22" opacity="0.732"/><rect x="418.5" y="265.42" width="3.0" height="17.16" rx="1.5" fill="#E24A22" opacity="0.753"/><rect x="424.1" y="263.73" width="3.0" height="20.54" rx="1.5" fill="#E24A22" opacity="0.774"/><rect x="429.7" y="265.68" width="3.0" height="16.64" rx="1.5" fill="#E24A22" opacity="0.794"/><rect x="435.3" y="268.15" width="3.0" height="11.7" rx="1.5" fill="#E24A22" opacity="0.815"/><rect x="440.9" y="269.97" width="3.0" height="8.06" rx="1.5" fill="#E24A22" opacity="0.835"/><rect x="446.5" y="271.14" width="3.0" height="5.72" rx="1.5" fill="#E24A22" opacity="0.856"/><rect x="452.1" y="269.45" width="3.0" height="9.1" rx="1.5" fill="#E24A22" opacity="0.876"/><rect x="457.7" y="267.63" width="3.0" height="12.74" rx="1.5" fill="#E24A22" opacity="0.897"/><rect x="463.3" y="268.67" width="3.0" height="10.66" rx="1.5" fill="#E24A22" opacity="0.918"/><rect x="468.9" y="270.49" width="3.0" height="7.02" rx="1.5" fill="#E24A22" opacity="0.938"/><rect x="474.5" y="271.79" width="3.0" height="4.42" rx="1.5" fill="#E24A22" opacity="0.959"/><rect x="480.1" y="272.7" width="3.0" height="2.6" rx="1.5" fill="#E24A22" opacity="0.979"/><rect x="485.7" y="272.7" width="3.0" height="2.6" rx="1.5" fill="#E24A22" opacity="1.0"/>
+    <rect x="508.7" y="263" width="1" height="22" fill="#E1E2E8"/>
+    <text x="524.7" y="278.5" font-family="Segoe UI Variable Display,Segoe UI,system-ui,-apple-system,sans-serif" font-size="13.5"
+          fill="#17181C">Listening</text>
+    <g transform="translate(590.7,263)">
+      <rect x="0" y="1.5" width="46" height="22" rx="5.5" fill="#D8DAE2"/>
+      <rect x="0" y="0" width="46" height="22" rx="5.5" fill="#FFFFFF" stroke="#DCDEE6" stroke-width="1"/>
+      <text x="23" y="15" font-family="Cascadia Mono,Consolas,ui-monospace,monospace" font-size="11.5" fill="#17181C"
+            text-anchor="middle">Hold</text>
+    </g>
+  </g>
+
+  <text x="440.0" y="326" font-family="Cascadia Mono,Consolas,ui-monospace,monospace" font-size="11" fill="#8E909A" text-anchor="middle">free  ·  no subscription  ·  no account  ·  your key, your machine</text>
+</svg>

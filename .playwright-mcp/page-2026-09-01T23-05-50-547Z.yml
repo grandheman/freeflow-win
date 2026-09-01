@@ -1,0 +1,10 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]: hero — github dark
+  - generic [ref=f1e5]: hero — github light
+  - generic [ref=f1e8]:
+    - generic [ref=f1e9]: logo at real sizes
+    - generic [ref=f1e10]:
+      - generic [ref=f1e11]: "128"
+      - generic [ref=f1e13]: "64"
+      - generic [ref=f1e15]: "32"
+      - generic [ref=f1e17]: "16"
