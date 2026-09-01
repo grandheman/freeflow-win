@@ -3,3 +3,7 @@ build/
 *.swp
 .env
 .build
+
+# Local tooling scratch
+.playwright-mcp/
+hero-*.png
