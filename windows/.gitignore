@@ -2,3 +2,5 @@ bin/
 obj/
 publish/
 *.user
+FreeFlow-win-x64-dotnet-required.zip
+fallback/

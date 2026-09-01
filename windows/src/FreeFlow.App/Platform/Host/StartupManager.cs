@@ -110,8 +110,17 @@ public static class StartupManager
 
             // Launched through the shared runtime, so the managed assembly has to
             // be passed along explicitly.
-            var assemblyPath = Assembly.GetEntryAssembly()?.Location;
-            if (string.IsNullOrEmpty(assemblyPath)) return null;
+            //
+            // Built from BaseDirectory rather than Assembly.Location, which always
+            // returns an empty string in a single-file build. That path is never
+            // reached in a single-file app, since the process is the app itself
+            // rather than the host, but reading Location at all is a build error
+            // under single-file analysis.
+            var assemblyName = Assembly.GetEntryAssembly()?.GetName().Name;
+            if (string.IsNullOrEmpty(assemblyName)) return null;
+
+            var assemblyPath = Path.Combine(AppContext.BaseDirectory, assemblyName + ".dll");
+            if (!File.Exists(assemblyPath)) return null;
 
             return $"\"{hostPath}\" \"{assemblyPath}\"";
         }
