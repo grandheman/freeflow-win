@@ -9,7 +9,28 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/zachlatta/freeflow/releases/latest/download/FreeFlow.dmg"><b>⬇ Download FreeFlow.dmg</b></a><br>
+  <b>This fork adds a Windows version.</b><br>
+  <a href="../../releases/latest"><b>Download for Windows</b></a>
+  &nbsp;&middot;&nbsp;
+  <a href="windows/INSTALL.md">Setup guide</a>
+  &nbsp;&middot;&nbsp;
+  <a href="windows/README.md">How it was built</a>
+</p>
+
+<p align="center">
+  <sub>Hold a key, talk, and your words appear wherever you were typing.<br>
+  Three minutes to set up, most of it spent getting a free API key.</sub>
+</p>
+
+<hr>
+
+<p align="center">
+  <sub>Everything below is the original macOS project, unchanged.<br>
+  For the Mac app see <a href="https://github.com/zachlatta/freeflow">zachlatta/freeflow</a>.</sub>
+</p>
+
+<p align="center">
+  <a href="https://github.com/zachlatta/freeflow/releases/latest/download/FreeFlow.dmg"><b>Download FreeFlow.dmg</b></a><br>
   <sub>Works on all Macs (Apple Silicon + Intel)</sub>
 </p>
 

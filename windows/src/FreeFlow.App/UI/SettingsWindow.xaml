@@ -1,0 +1,126 @@
+<Window x:Class="FreeFlow.App.UI.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:FreeFlow.App.UI"
+        Title="FreeFlow Settings"
+        Width="820" Height="640"
+        MinWidth="700" MinHeight="500"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource Surface}">
+
+    <!--
+        A left rail of sections beside a scrolling detail pane. Settings here is dense
+        and scanned rather than read, so grouping wins over a single long column.
+    -->
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="212" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Section rail -->
+        <Border Grid.Column="0"
+                Background="{DynamicResource SurfaceSunken}"
+                BorderBrush="{DynamicResource Line}"
+                BorderThickness="0,0,1,0">
+            <DockPanel Margin="16,20,16,16">
+
+                <StackPanel DockPanel.Dock="Top" Margin="4,0,0,22">
+                    <TextBlock Text="FreeFlow" Style="{DynamicResource TitleText}" />
+                    <TextBlock x:Name="VersionLabel"
+                               Text="Dictation for Windows"
+                               Style="{DynamicResource CaptionText}" />
+                </StackPanel>
+
+                <!-- Status pinned to the bottom: it is state, not navigation. -->
+                <Border DockPanel.Dock="Bottom"
+                        Background="{DynamicResource SurfaceRaised}"
+                        BorderBrush="{DynamicResource Line}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="12,10">
+                    <StackPanel>
+                        <TextBlock Text="SHORTCUT" Style="{DynamicResource EyebrowText}" Margin="0,0,0,7" />
+                        <ui:KeycapView x:Name="HoldPreview" />
+                    </StackPanel>
+                </Border>
+
+                <ListBox x:Name="SectionList"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         SelectedIndex="0"
+                         SelectionChanged="OnSectionChanged">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="12,9" />
+                            <Setter Property="Margin" Value="0,1" />
+                            <Setter Property="Foreground" Value="{DynamicResource InkDim}" />
+                            <Setter Property="FontFamily" Value="{DynamicResource BodyFont}" />
+                            <Setter Property="FontSize" Value="{DynamicResource BodySize}" />
+                            <Setter Property="Cursor" Value="Hand" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="Chrome"
+                                                Background="Transparent"
+                                                CornerRadius="7"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Chrome" Property="Background"
+                                                        Value="{DynamicResource SurfaceRaised}" />
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Chrome" Property="Background"
+                                                        Value="{DynamicResource SurfaceRaised}" />
+                                                <Setter Property="Foreground" Value="{DynamicResource Ink}" />
+                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+
+                    <ListBoxItem Content="Provider" />
+                    <ListBoxItem Content="Shortcuts" />
+                    <ListBoxItem Content="Dictation" />
+                    <ListBoxItem Content="Edit Mode" />
+                    <ListBoxItem Content="Context" />
+                    <ListBoxItem Content="Audio" />
+                    <ListBoxItem Content="Advanced" />
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- Detail pane -->
+        <DockPanel Grid.Column="1">
+
+            <Border DockPanel.Dock="Bottom"
+                    BorderBrush="{DynamicResource Line}"
+                    BorderThickness="0,1,0,0"
+                    Padding="28,14">
+                <DockPanel>
+                    <TextBlock x:Name="SaveHint"
+                               DockPanel.Dock="Left"
+                               Text="Changes save as you make them."
+                               Style="{DynamicResource CaptionText}"
+                               VerticalAlignment="Center"
+                               Margin="0" />
+                    <Button Content="Done"
+                            Style="{DynamicResource PrimaryButton}"
+                            HorizontalAlignment="Right"
+                            Click="OnDoneClicked" />
+                </DockPanel>
+            </Border>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,24,28,24">
+                <StackPanel x:Name="SectionHost" MaxWidth="520" HorizontalAlignment="Left" />
+            </ScrollViewer>
+        </DockPanel>
+    </Grid>
+</Window>

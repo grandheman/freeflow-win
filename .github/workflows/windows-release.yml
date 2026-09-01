@@ -1,0 +1,108 @@
+name: Windows release
+
+# Publishes a downloadable build when a win-* tag is pushed.
+#
+#   git tag win-v1.0.0
+#   git push origin win-v1.0.0
+#
+# Tags are prefixed so they cannot be confused with the upstream macOS project's
+# release tags, which this fork still carries.
+
+on:
+  push:
+    tags:
+      - 'win-v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (for a manual run)'
+        required: true
+        default: 'win-v0.0.0-test'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # Never ship something the tests have not passed on.
+      - name: Test
+        working-directory: windows
+        run: |
+          dotnet restore FreeFlow.sln
+          dotnet build FreeFlow.sln --configuration Release --no-restore
+          dotnet test tests/FreeFlow.Core.Tests/FreeFlow.Core.Tests.csproj --configuration Release --no-build
+
+      # Self-contained so the machine that runs it needs nothing installed.
+      # Larger than a framework-dependent build, but a download-and-run story is
+      # worth the size for someone who just wants to dictate.
+      - name: Publish self-contained executable
+        working-directory: windows
+        run: >
+          dotnet publish src/FreeFlow.App/FreeFlow.App.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -p:DebugType=none
+          --output publish
+
+      # A framework-dependent build plus the launcher, for machines where Smart
+      # App Control blocks the unsigned single-file executable. Running through
+      # the Microsoft-signed dotnet host is the only way in short of signing.
+      - name: Publish framework-dependent fallback
+        working-directory: windows
+        run: >
+          dotnet publish src/FreeFlow.App/FreeFlow.App.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained false
+          --output fallback/app
+
+      - name: Assemble the fallback archive
+        working-directory: windows
+        run: |
+          Copy-Item run-freeflow.vbs fallback/
+          Copy-Item install-shortcuts.ps1 fallback/
+          Copy-Item fix-stuck.ps1 fallback/
+          Copy-Item INSTALL.md fallback/README.md
+          Compress-Archive -Path fallback/* -DestinationPath FreeFlow-win-x64-dotnet-required.zip
+
+      - name: Name the artifacts
+        id: names
+        shell: pwsh
+        run: |
+          $tag = if ($env:GITHUB_REF -like 'refs/tags/*') {
+            $env:GITHUB_REF -replace 'refs/tags/', ''
+          } else {
+            '${{ github.event.inputs.tag }}'
+          }
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          Copy-Item windows/publish/FreeFlow.exe "FreeFlow-win-x64.exe"
+          Copy-Item windows/FreeFlow-win-x64-dotnet-required.zip .
+          Get-ChildItem FreeFlow-* | ForEach-Object {
+            "{0}  {1:N1} MB" -f $_.Name, ($_.Length / 1MB)
+          }
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.names.outputs.tag }}
+          name: FreeFlow for Windows ${{ steps.names.outputs.tag }}
+          body_path: windows/RELEASE-NOTES.md
+          files: |
+            FreeFlow-win-x64.exe
+            FreeFlow-win-x64-dotnet-required.zip
+          draft: false
+          prerelease: false

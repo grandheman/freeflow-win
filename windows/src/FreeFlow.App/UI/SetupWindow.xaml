@@ -1,0 +1,119 @@
+<Window x:Class="FreeFlow.App.UI.SetupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:FreeFlow.App.UI"
+        Title="Set up FreeFlow"
+        Width="560" Height="760"
+        MinWidth="480" MinHeight="420"
+        ResizeMode="CanResize"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource Surface}">
+
+    <!--
+        First run. Two things stand between a new user and working dictation: a key,
+        and knowing which key to hold. Everything else waits for Settings.
+
+        The title and the action button are docked so they stay put, and the steps
+        between them scroll. Without that the second step is clipped on a short
+        screen with no way to reach it, since the button docking to the bottom hides
+        the fact that anything is missing.
+    -->
+
+    <DockPanel Margin="36,32,36,28">
+
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="FreeFlow" Style="{DynamicResource TitleText}" />
+            <TextBlock Text="Hold a key, talk, and your words land wherever you were typing."
+                       Style="{DynamicResource BodyText}"
+                       Foreground="{DynamicResource InkDim}"
+                       Margin="0,6,0,0" />
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,20,0,0">
+            <Button x:Name="FinishButton"
+                    Content="Start dictating"
+                    Style="{DynamicResource PrimaryButton}"
+                    HorizontalAlignment="Stretch"
+                    IsEnabled="False"
+                    Click="OnFinishClicked" />
+            <TextBlock x:Name="FinishHint"
+                       Text="Add your API key to continue."
+                       Style="{DynamicResource CaptionText}"
+                       HorizontalAlignment="Center"
+                       Margin="0,10,0,0" />
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+            <StackPanel Margin="0,32,0,0">
+
+                <!-- Step one: the key. -->
+                <TextBlock Text="STEP 1" Style="{DynamicResource EyebrowText}" />
+                <TextBlock Text="Add a Groq API key"
+                           Style="{DynamicResource HeadingText}"
+                           Margin="0,0,0,6" />
+                <TextBlock Style="{DynamicResource BodyText}"
+                           Foreground="{DynamicResource InkDim}"
+                           Margin="0,0,0,12">
+                    <Run Text="Groq's free tier is fast enough for live dictation. Get a key at" />
+                    <Hyperlink NavigateUri="https://console.groq.com/keys"
+                               RequestNavigate="OnLinkClicked"
+                               Foreground="{DynamicResource Focus}">console.groq.com/keys</Hyperlink><Run Text="." />
+                </TextBlock>
+
+                <PasswordBox x:Name="ApiKeyBox"
+                             Padding="10,9"
+                             FontSize="13"
+                             PasswordChanged="OnApiKeyChanged" />
+
+                <StackPanel x:Name="ValidationRow" Orientation="Horizontal" Margin="0,8,0,0">
+                    <TextBlock x:Name="ValidationLabel"
+                               Text="Your key is stored encrypted to your Windows account."
+                               Style="{DynamicResource CaptionText}"
+                               Margin="0" />
+                </StackPanel>
+
+                <Rectangle Height="1" Fill="{DynamicResource Line}" Margin="0,28,0,28" />
+
+                <!-- Step two: the shortcut. -->
+                <TextBlock Text="STEP 2" Style="{DynamicResource EyebrowText}" />
+                <TextBlock Text="Learn the key"
+                           Style="{DynamicResource HeadingText}"
+                           Margin="0,0,0,6" />
+                <TextBlock Text="Hold it, say something, and let go. The text appears where your cursor is."
+                           Style="{DynamicResource BodyText}"
+                           Foreground="{DynamicResource InkDim}"
+                           Margin="0,0,0,14" />
+
+                <Border Background="{DynamicResource SurfaceSunken}"
+                        BorderBrush="{DynamicResource Line}"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Padding="18,16">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <ui:KeycapView x:Name="HoldKeys" VerticalAlignment="Center" />
+                            <TextBlock Text="hold to talk"
+                                       Style="{DynamicResource BodyText}"
+                                       Foreground="{DynamicResource InkDim}"
+                                       VerticalAlignment="Center"
+                                       Margin="6,0,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <ui:KeycapView x:Name="ToggleKeys" VerticalAlignment="Center" />
+                            <TextBlock Text="tap to keep recording hands-free"
+                                       Style="{DynamicResource BodyText}"
+                                       Foreground="{DynamicResource InkDim}"
+                                       VerticalAlignment="Center"
+                                       Margin="6,0,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Style="{DynamicResource CaptionText}" Margin="0,12,0,0"
+                           Text="On the Mac version this is the Fn key. Windows keyboards handle Fn in firmware, so it never reaches applications. Right Ctrl takes its place, and you can change it in Settings." />
+
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

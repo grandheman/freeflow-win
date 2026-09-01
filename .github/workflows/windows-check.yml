@@ -1,0 +1,64 @@
+name: Windows check
+
+# Verification for the Windows port. The macOS jobs in check.yml are unchanged and
+# still gate the Swift sources; this runs alongside them for windows/.
+on:
+  pull_request:
+    paths:
+      - 'windows/**'
+      - '.github/workflows/windows-check.yml'
+  push:
+    branches:
+      - main
+      - windows-port
+    paths:
+      - 'windows/**'
+      - '.github/workflows/windows-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        working-directory: windows
+        run: dotnet restore FreeFlow.sln
+
+      # Warnings are errors in Directory.Build.props, so this also enforces that the
+      # port stays warning-clean.
+      - name: Build
+        working-directory: windows
+        run: dotnet build FreeFlow.sln --configuration Release --no-restore
+
+      - name: Test
+        working-directory: windows
+        run: dotnet test tests/FreeFlow.Core.Tests/FreeFlow.Core.Tests.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Publish self-contained executable
+        working-directory: windows
+        run: >
+          dotnet publish src/FreeFlow.App/FreeFlow.App.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          --output publish
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: FreeFlow-windows-x64
+          path: windows/publish/FreeFlow.exe
+          if-no-files-found: error
